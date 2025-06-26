@@ -1,3 +1,4 @@
+{% load custom_filters %}
 <!DOCTYPE html>
 <html>
 <head>
@@ -6,60 +7,59 @@
 </head>
 <body class="bg-light">
 
-    <div class="container mt-5">
-        <h1 class="mb-4 text-center">📝 My To-Do List</h1>
+<div class="container mt-5">
+    <h1 class="mb-4 text-center">📝 My To-Do List</h1>
 
-        <!-- Add Task Form -->
-        <div class="card mb-4 shadow-sm">
-            <div class="card-body">
-                <form method="POST" class="d-flex flex-column gap-2" enctype="multipart/form-data">
-                    {% csrf_token %}
-                    <input type="text" name="title" class="form-control" placeholder="Enter a new task..." required>
-
-                    <textarea name="description" class="form-control" placeholder="Enter description..."></textarea>
-
-                    <input type="file" name="image" class="form-control">
-
-                    <button type="submit" class="btn btn-success">Add</button>
-                </form>
-            </div>
+    <!-- Add Task Form -->
+    <div class="card mb-4 shadow-sm">
+        <div class="card-body">
+            <form method="POST" class="d-flex flex-column gap-2" enctype="multipart/form-data">
+                {% csrf_token %}
+                <input type="text" name="title" class="form-control" placeholder="Enter a new task..." required>
+                <textarea name="description" class="form-control" placeholder="Enter description..."></textarea>
+                <input type="file" name="image" class="form-control">
+                <button type="submit" class="btn btn-success">Add</button>
+            </form>
         </div>
-
-        <!-- Task List -->
-        {% if tasks %}
-            <ul class="list-group">
-                {% for task in tasks %}
-                    <li class="list-group-item d-flex justify-content-between align-items-start flex-wrap">
-                        <div class="me-auto">
-                            <strong>{{ task.title }}</strong><br>
-
-                            {% if task.description %}
-                                <small class="text-muted">{{ task.description }}</small><br>
-                            {% endif %}
-
-                            {% if task.image %}
-                                <img src="{{ task.image.url }}" alt="Task Image" class="img-thumbnail mt-2" style="max-width: 200px;">
-                            {% endif %}
-
-                            {% if task.completed %}
-                                <span class="badge bg-success mt-2">Completed</span>
-                            {% else %}
-                                <span class="badge bg-warning text-dark mt-2">Not Done</span>
-                            {% endif %}
-                        </div>
-                        <div class="mt-2">
-                            {% if not task.completed %}
-                                <a href="{% url 'complete_task' task.id %}" class="btn btn-sm btn-outline-primary">Mark as Done</a>
-                            {% endif %}
-                            <a href="{% url 'delete_task' task.id %}" class="btn btn-sm btn-outline-danger ms-1">Delete</a>
-                        </div>
-                    </li>
-                {% endfor %}
-            </ul>
-        {% else %}
-            <div class="alert alert-info text-center">No tasks yet. Add one above!</div>
-        {% endif %}
     </div>
+
+    <!-- Task List -->
+    {% if tasks %}
+        <ul class="list-group">
+            {% for task in tasks %}
+                {% with details|get_item:task.id as detail %}
+                <li class="list-group-item d-flex justify-content-between align-items-start flex-wrap">
+                    <div class="me-auto">
+                        <strong>{{ task.title }}</strong><br>
+
+                        {% if detail and detail.description %}
+                            <small class="text-muted">{{ detail.description }}</small><br>
+                        {% endif %}
+
+                        {% if detail and detail.image %}
+                            <img src="{{ detail.image.url }}" alt="Task Image" class="img-thumbnail mt-2" style="max-width: 200px;">
+                        {% endif %}
+
+                        {% if task.completed %}
+                            <span class="badge bg-success mt-2">Completed</span>
+                        {% else %}
+                            <span class="badge bg-warning text-dark mt-2">Not Done</span>
+                        {% endif %}
+                    </div>
+                    <div class="mt-2">
+                        {% if not task.completed %}
+                            <a href="{% url 'complete_task' task.id %}" class="btn btn-sm btn-outline-primary">Mark as Done</a>
+                        {% endif %}
+                        <a href="{% url 'delete_task' task.id %}" class="btn btn-sm btn-outline-danger ms-1">Delete</a>
+                    </div>
+                </li>
+                {% endwith %}
+            {% endfor %}
+        </ul>
+    {% else %}
+        <div class="alert alert-info text-center">No tasks yet. Add one above!</div>
+    {% endif %}
+</div>
 
 </body>
 </html>

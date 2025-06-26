@@ -1,25 +1,28 @@
 from django.shortcuts import render, redirect, get_object_or_404
-from .models import Task
-
-# Show all tasks and handle new task submissions
-from .models import Task
+from .models import Task, TaskDetails
 
 def task_list(request):
     if request.method == 'POST':
         title = request.POST.get('title')
-        description = request.POST.get('description')
+        description = request.POST.get('description', '')
         image = request.FILES.get('image')
 
         if title:
-            Task.objects.create(
-                title=title,
+            task = Task.objects.create(title=title)
+            TaskDetails.objects.create(
+                task=task,
                 description=description,
                 image=image
             )
         return redirect('/')
 
-    tasks = Task.objects.all()
-    return render(request, 'todo_app/task_list.html', {'tasks': tasks})
+    tasks = Task.objects.all().order_by('-created_at')
+    details = {d.task_id: d for d in TaskDetails.objects.all()}
+
+    return render(request, 'todo_app/task_list.html', {
+        'tasks': tasks,
+        'details': details
+    })
 
 
 # Mark a task as completed
