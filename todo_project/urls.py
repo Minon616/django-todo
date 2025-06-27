@@ -1,14 +1,14 @@
-from django.contrib import admin
+# todo_project/urls.py
+
+from django.conf import settings
+from django.conf.urls.static import static
 from django.urls import path, include
 
-from django.conf import settings                # ✅ for media settings
-from django.conf.urls.static import static     # ✅ for serving media in dev
-
 urlpatterns = [
-    path('admin/', admin.site.urls),
-    path('', include('todo_app.urls')),  # ✅ main app routes
+    # All URLs from the todo_app (HTML + API routes)
+    path('', include('todo_app.urls')),
 ]
 
-# ✅ Serve media files during development
+# Serve media files during development
 if settings.DEBUG:
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
