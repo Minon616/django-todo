@@ -5,8 +5,9 @@ from . import views
 from rest_framework.routers import DefaultRouter
 
 router = DefaultRouter()
-router.register(r'api/tasks', views.TaskViewSet, basename='task')
-router.register(r'api/task-details', views.TaskDetailsViewSet, basename='taskdetails')
+router.register(r'tasks', views.TaskViewSet, basename='task')
+router.register(r'task-details', views.TaskDetailsViewSet, basename='taskdetails')
+
 
 urlpatterns = [
     path('', views.task_list, name='task_list'),
