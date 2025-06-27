@@ -8,16 +8,15 @@
 <body class="bg-light">
 
 <div class="container mt-5">
-    <h1 class="mb-4 text-center">📝 My To-Do List</h1>
+    <h1 class="mb-4 text-center">📝 My To-Do List (API-Powered)</h1>
 
     <!-- Add Task Form -->
     <div class="card mb-4 shadow-sm">
         <div class="card-body">
-            <form method="POST" class="d-flex flex-column gap-2" enctype="multipart/form-data">
-                {% csrf_token %}
-                <input type="text" name="title" class="form-control" placeholder="Enter a new task..." required>
-                <textarea name="description" class="form-control" placeholder="Enter description..."></textarea>
-                <input type="file" name="image" class="form-control">
+            <form id="taskForm" class="d-flex flex-column gap-2" enctype="multipart/form-data">
+                <input type="text" id="title" class="form-control" placeholder="Enter a new task..." required>
+                <textarea id="description" class="form-control" placeholder="Enter description..."></textarea>
+                <input type="file" id="image" class="form-control">
                 <button type="submit" class="btn btn-success">Add</button>
             </form>
         </div>
@@ -60,6 +59,53 @@
         <div class="alert alert-info text-center">No tasks yet. Add one above!</div>
     {% endif %}
 </div>
+
+<script>
+document.getElementById('taskForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+
+    const title = document.getElementById('title').value;
+    const description = document.getElementById('description').value;
+    const image = document.getElementById('image').files[0];
+
+    try {
+        // Step 1: Create task (title only)
+        const taskRes = await fetch('/api/tasks/', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ title })
+        });
+
+        if (!taskRes.ok) {
+            const err = await taskRes.json();
+            return alert('Task creation failed: ' + JSON.stringify(err));
+        }
+
+        const taskData = await taskRes.json(); // taskData.id
+
+        // Step 2: Create task details (image + description + task ID)
+        const formData = new FormData();
+        formData.append('task', taskData.id);
+        formData.append('description', description);
+        if (image) formData.append('image', image);
+
+        const detailsRes = await fetch('/api/task-details/', {
+            method: 'POST',
+            body: formData
+        });
+
+        if (!detailsRes.ok) {
+            const err = await detailsRes.json();
+            return alert('TaskDetails creation failed: ' + JSON.stringify(err));
+        }
+
+        alert("Task added successfully!");
+        window.location.reload();
+    } catch (err) {
+        alert("Something went wrong: " + err);
+    }
+});
+</script>
 
 </body>
 </html>
