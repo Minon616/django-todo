@@ -10,8 +10,13 @@
 <div class="container mt-5">
     <h1 class="mb-4 text-center">📝 My To-Do List (API-Powered with JWT)</h1>
 
+    <!-- Logout Button (hidden until logged in) -->
+    <div class="text-end mb-3" id="logoutSection" style="display: none;">
+        <button id="logoutBtn" class="btn btn-outline-secondary">Logout</button>
+    </div>
+
     <!-- Login Form -->
-    <div class="card mb-4 shadow-sm">
+    <div class="card mb-4 shadow-sm" id="loginCard">
         <div class="card-body">
             <form id="loginForm" class="d-flex flex-column gap-2">
                 <input type="text" id="loginUsername" class="form-control" placeholder="Username" required>
@@ -73,6 +78,17 @@
 </div>
 
 <script>
+// Check login state on page load
+window.addEventListener('DOMContentLoaded', () => {
+    const access = localStorage.getItem('access');
+    if (access) {
+        document.getElementById('taskSection').style.display = "block";
+        document.getElementById('logoutSection').style.display = "block";
+        document.getElementById('loginCard').style.display = "none";
+    }
+});
+
+// Handle Login
 document.getElementById('loginForm').addEventListener('submit', async function(e) {
     e.preventDefault();
 
@@ -93,17 +109,28 @@ document.getElementById('loginForm').addEventListener('submit', async function(e
             return;
         }
 
-        // Save tokens in localStorage
+        // Save tokens
         localStorage.setItem('access', data.access);
         localStorage.setItem('refresh', data.refresh);
 
         document.getElementById('loginStatus').textContent = "Login successful!";
         document.getElementById('taskSection').style.display = "block";
+        document.getElementById('logoutSection').style.display = "block";
+        document.getElementById('loginCard').style.display = "none";
     } catch (err) {
         document.getElementById('loginStatus').textContent = "Error: " + err.message;
     }
 });
 
+// Handle Logout
+document.getElementById('logoutBtn').addEventListener('click', function () {
+    localStorage.removeItem('access');
+    localStorage.removeItem('refresh');
+    alert("Logged out successfully!");
+    window.location.reload(); // Clear state visually
+});
+
+// Handle Task Form Submission
 document.getElementById('taskForm').addEventListener('submit', async function(e) {
     e.preventDefault();
 
@@ -118,7 +145,7 @@ document.getElementById('taskForm').addEventListener('submit', async function(e)
     }
 
     try {
-        // Step 1: Create task (title only)
+        // Step 1: Create task
         const taskRes = await fetch('/api/tasks/', {
             method: 'POST',
             headers: {
@@ -135,7 +162,7 @@ document.getElementById('taskForm').addEventListener('submit', async function(e)
 
         const taskData = await taskRes.json();
 
-        // Step 2: Create task details (image + description + task ID)
+        // Step 2: Create task details
         const formData = new FormData();
         formData.append('task', taskData.id);
         formData.append('description', description);
