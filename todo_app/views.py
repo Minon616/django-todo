@@ -1,11 +1,10 @@
-# todo_app/views.py
-
 from django.shortcuts import render, redirect, get_object_or_404
 from .models import Task, TaskDetails
 
 # DRF Imports
 from rest_framework import viewsets
 from rest_framework.parsers import MultiPartParser, FormParser
+from rest_framework.permissions import IsAuthenticated
 from .serializers import TaskSerializer, TaskDetailsSerializer
 
 # -------------------------------
@@ -32,17 +31,19 @@ def delete_task(request, task_id):
     return redirect('/')
 
 # -------------------------------
-# API Views
+# API Views (Protected with JWT)
 # -------------------------------
 
 class TaskViewSet(viewsets.ModelViewSet):
     queryset = Task.objects.all().order_by('-created_at')
     serializer_class = TaskSerializer
+    permission_classes = [IsAuthenticated]  # Require JWT token
 
 class TaskDetailsViewSet(viewsets.ModelViewSet):
     queryset = TaskDetails.objects.all()
     serializer_class = TaskDetailsSerializer
     parser_classes = [MultiPartParser, FormParser]
+    permission_classes = [IsAuthenticated]  # Require JWT token
 
     def perform_create(self, serializer):
         serializer.save()

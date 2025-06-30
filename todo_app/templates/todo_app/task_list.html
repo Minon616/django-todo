@@ -8,10 +8,22 @@
 <body class="bg-light">
 
 <div class="container mt-5">
-    <h1 class="mb-4 text-center">📝 My To-Do List (API-Powered)</h1>
+    <h1 class="mb-4 text-center">📝 My To-Do List (API-Powered with JWT)</h1>
 
-    <!-- Add Task Form -->
+    <!-- Login Form -->
     <div class="card mb-4 shadow-sm">
+        <div class="card-body">
+            <form id="loginForm" class="d-flex flex-column gap-2">
+                <input type="text" id="loginUsername" class="form-control" placeholder="Username" required>
+                <input type="password" id="loginPassword" class="form-control" placeholder="Password" required>
+                <button type="submit" class="btn btn-primary">Login</button>
+            </form>
+            <div id="loginStatus" class="mt-2 text-danger"></div>
+        </div>
+    </div>
+
+    <!-- Add Task Form (hidden until login) -->
+    <div id="taskSection" class="card mb-4 shadow-sm" style="display: none;">
         <div class="card-body">
             <form id="taskForm" class="d-flex flex-column gap-2" enctype="multipart/form-data">
                 <input type="text" id="title" class="form-control" placeholder="Enter a new task..." required>
@@ -61,18 +73,58 @@
 </div>
 
 <script>
+document.getElementById('loginForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+
+    const username = document.getElementById('loginUsername').value;
+    const password = document.getElementById('loginPassword').value;
+
+    try {
+        const res = await fetch('/api/token/', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ username, password })
+        });
+
+        const data = await res.json();
+
+        if (!res.ok) {
+            document.getElementById('loginStatus').textContent = data.detail || 'Login failed';
+            return;
+        }
+
+        // Save tokens in localStorage
+        localStorage.setItem('access', data.access);
+        localStorage.setItem('refresh', data.refresh);
+
+        document.getElementById('loginStatus').textContent = "Login successful!";
+        document.getElementById('taskSection').style.display = "block";
+    } catch (err) {
+        document.getElementById('loginStatus').textContent = "Error: " + err.message;
+    }
+});
+
 document.getElementById('taskForm').addEventListener('submit', async function(e) {
     e.preventDefault();
 
     const title = document.getElementById('title').value;
     const description = document.getElementById('description').value;
     const image = document.getElementById('image').files[0];
+    const accessToken = localStorage.getItem('access');
+
+    if (!accessToken) {
+        alert("You must log in first!");
+        return;
+    }
 
     try {
         // Step 1: Create task (title only)
         const taskRes = await fetch('/api/tasks/', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': 'Bearer ' + accessToken
+            },
             body: JSON.stringify({ title })
         });
 
@@ -81,7 +133,7 @@ document.getElementById('taskForm').addEventListener('submit', async function(e)
             return alert('Task creation failed: ' + JSON.stringify(err));
         }
 
-        const taskData = await taskRes.json(); // taskData.id
+        const taskData = await taskRes.json();
 
         // Step 2: Create task details (image + description + task ID)
         const formData = new FormData();
@@ -91,6 +143,9 @@ document.getElementById('taskForm').addEventListener('submit', async function(e)
 
         const detailsRes = await fetch('/api/task-details/', {
             method: 'POST',
+            headers: {
+                'Authorization': 'Bearer ' + accessToken
+            },
             body: formData
         });
 
@@ -102,7 +157,7 @@ document.getElementById('taskForm').addEventListener('submit', async function(e)
         alert("Task added successfully!");
         window.location.reload();
     } catch (err) {
-        alert("Something went wrong: " + err);
+        alert("Something went wrong: " + err.message);
     }
 });
 </script>
